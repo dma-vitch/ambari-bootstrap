@@ -37,7 +37,11 @@ command_exists() {
 check_firewall() {
 type_firewall=$(yum list installed | egrep ^firewalld)
 if [ -n "${type_firewall}" ]; then
-    ver_firewall="firewalld"
+    if [ -n "$(yum list installed | egrep ^iptables-services)" ]; then
+        ver_firewall="all"
+    else
+        ver_firewall="firewalld"
+    fi
 else
     ver_firewall="iptables"
 fi
@@ -165,6 +169,16 @@ case "${lsb_dist}" in
                         chkconfig ip6tables off || true
                         service ip6tables stop || true
                      ;;
+                    all)
+                        printf "## Info: Disabling firewalld\n"
+                        systemctl disable firewalld || true
+                        systemctl stop firewalld || true
+                        printf "## Info: Disabling iptables\n"
+                        chkconfig iptables off || true
+                        service iptables stop || true
+                        chkconfig ip6tables off || true
+                        service ip6tables stop || true
+                    ;;
                 esac
             fi
 
